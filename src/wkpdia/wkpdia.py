@@ -6,25 +6,27 @@ from tclogger import logger
 
 
 class WikipediaFetcher:
-    def __init__(self, lang="en"):
-        self.lang = lang
-        self.output_folder = Path(__file__).parents[1] / ".cache" / "wikipedia"
+    def __init__(self):
+        self.output_root = Path(__file__).parents[1] / ".cache"
 
-        self.headers = {"User-Agent": USER_AGENT}
-
-    def construct_request_params(self, title, proxy=None):
-        self.url = WIKIPEDIA_URL_ROOT + title
+    def construct_request_params(self, title, lang="en", proxy=None):
+        self.url = f"https://{lang}.wikipedia.org/wiki/{title}"
         requests_params = {
             "url": self.url,
-            "headers": self.headers,
+            "headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            },
             "timeout": 15,
         }
         if proxy:
             requests_params["proxies"] = {"http": proxy, "https": proxy}
         return requests_params
 
-    def fetch(self, title, overwrite=False, output_format="markdown", proxy=None):
+    def fetch(
+        self, title, overwrite=False, output_format="markdown", lang="en", proxy=None
+    ):
         logger.note(f"> Fetching from Wikipedia: [{title}]")
+        self.output_folder = self.output_root / f"{lang}-wikipedia"
         self.html_path = self.output_folder / f"{title}.html"
 
         if not overwrite and self.html_path.exists():
@@ -32,24 +34,26 @@ class WikipediaFetcher:
             with open(self.html_path, "r", encoding="utf-8") as rf:
                 self.html_str = rf.read()
         else:
-            requests_params = self.construct_request_params(title=title, proxy=proxy)
+            requests_params = self.construct_request_params(
+                title=title, lang=lang, proxy=proxy
+            )
             req = requests.get(**requests_params)
 
             status_code = req.status_code
             if status_code == 200:
-                logger.file(f"  - [{status_code}] {self.url}")
                 self.html_str = req.text
                 self.output_folder.mkdir(parents=True, exist_ok=True)
                 with open(self.html_path, "w", encoding="utf-8") as wf:
                     wf.write(self.html_str)
+                logger.file(f"  - [{status_code}] {self.url}")
                 logger.success(f"  > HTML Saved at: {self.html_path}")
             else:
                 if status_code == 404:
-                    err_msg = f"{status_code} - Page not found : [{title}]"
+                    err_msg = f"{status_code} - Page not found: ({lang}) [{title}]"
                 else:
                     err_msg = f"{status_code} - Error"
                 logger.err(err_msg)
-                raise Exception(err_msg)
+                raise ConnectionError(err_msg)
 
         if output_format == "markdown":
             return self.to_markdown(overwrite=overwrite)
@@ -76,17 +80,21 @@ class WikipediaFetcher:
         }
 
 
-def wkpdia_get(title, overwrite=False, output_format="markdown", proxy=None):
+def wkpdia_get(title, overwrite=False, output_format="markdown", lang="en", proxy=None):
     fetcher = WikipediaFetcher()
     return fetcher.fetch(
-        title, overwrite=overwrite, output_format=output_format, proxy=proxy
+        title, overwrite=overwrite, output_format=output_format, lang=lang, proxy=proxy
     )
 
 
 if __name__ == "__main__":
     title = "R._Daneel_Olivaw"
     res = wkpdia_get(
-        title, overwrite=True, output_format="markdown", proxy="http://127.0.0.1:11111"
+        title,
+        overwrite=True,
+        output_format="markdown",
+        lang="en",
+        proxy="http://127.0.0.1:11111",
     )
     path, content, output_format = res["path"], res["str"], res["format"]
 
