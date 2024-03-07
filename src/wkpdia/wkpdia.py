@@ -14,7 +14,7 @@ class WikipediaFetcher:
 
         self.headers = {"User-Agent": USER_AGENT}
 
-    def fetch(self, title, overwrite=False, to_markdown=True):
+    def fetch(self, title, overwrite=False, output_format="markdown"):
         logger.note(f"> Fetching from Wikipedia: [{title}]")
         self.html_path = self.output_folder / f"{title}.html"
 
@@ -40,10 +40,10 @@ class WikipediaFetcher:
                     logger.err(f"{status_code} Error")
                 return (None, None)
 
-        if to_markdown:
+        if output_format == "markdown":
             return self.to_markdown(overwrite=overwrite)
         else:
-            return (self.html_path, self.html_str)
+            return {"path": self.html_path, "str": self.html_str}
 
     def to_markdown(self, overwrite=False):
         self.markdown_path = self.html_path.with_suffix(".md")
@@ -58,13 +58,19 @@ class WikipediaFetcher:
                 wf.write(self.markdown_str)
             logger.success(f"  > Mardown saved at: {self.markdown_path}")
 
-        return (self.markdown_path, self.markdown_str)
+        return {"path": self.markdown_path, "str": self.markdown_str}
+
+
+def wkpdia_get(title, overwrite=False, output_format="markdown"):
+    fetcher = WikipediaFetcher()
+    return fetcher.fetch(title, overwrite=overwrite, output_format=output_format)
 
 
 if __name__ == "__main__":
-    fetcher = WikipediaFetcher()
     title = "R._Daneel_Olivaw"
-    path, content = fetcher.fetch(title, overwrite=True)
+    res = wkpdia_get(title, overwrite=True, output_format="markdown")
+    path = res["path"]
+    content = res["str"]
 
     logger.file(f"> [{path}]:")
     logger.line(content)
