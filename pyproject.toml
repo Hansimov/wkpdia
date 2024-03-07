@@ -1,6 +1,6 @@
 [project]
 name = "wkpdia"
-version = "0.1"
+version = "0.2"
 authors = [
     { name="Hansimov" },
 ]
@@ -17,3 +17,4 @@ dependencies = [ "requests", "purehtml" ]
 [project.urls]
 Homepage = "https://github.com/Hansimov/wkpdia"
 Issues = "https://github.com/Hansimov/wkpdia/issues"
+CHANGELOG = "https://github.com/Hansimov/wkpdia/blob/main/CHANGELOG.md"
