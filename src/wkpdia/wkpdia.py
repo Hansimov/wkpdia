@@ -4,7 +4,7 @@ from pathlib import Path
 from purehtml import purify_html_file
 from tclogger import logger
 
-from constants import USER_AGENT, WIKIPEDIA_URL_ROOT
+from .constants import USER_AGENT, WIKIPEDIA_URL_ROOT
 
 
 class WikipediaFetcher:
