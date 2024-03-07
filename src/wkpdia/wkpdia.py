@@ -50,7 +50,7 @@ class WikipediaFetcher:
         if output_format == "markdown":
             return self.to_markdown(overwrite=overwrite)
         else:
-            return {"path": self.html_path, "str": self.html_str}
+            return {"path": self.html_path, "str": self.html_str, "format": "html"}
 
     def to_markdown(self, overwrite=False):
         self.markdown_path = self.html_path.with_suffix(".md")
@@ -65,7 +65,11 @@ class WikipediaFetcher:
                 wf.write(self.markdown_str)
             logger.success(f"  > Mardown saved at: {self.markdown_path}")
 
-        return {"path": self.markdown_path, "str": self.markdown_str}
+        return {
+            "path": self.markdown_path,
+            "str": self.markdown_str,
+            "format": "markdown",
+        }
 
 
 def wkpdia_get(title, overwrite=False, output_format="markdown", proxy=None):
@@ -80,8 +84,7 @@ if __name__ == "__main__":
     res = wkpdia_get(
         title, overwrite=True, output_format="markdown", proxy="http://127.0.0.1:11111"
     )
-    path = res["path"]
-    content = res["str"]
+    path, content, output_format = res["path"], res["str"], res["format"]
 
-    logger.file(f"> [{path}]:")
+    logger.file(f"> [{output_format}] [{path}]:")
     logger.line(content)
