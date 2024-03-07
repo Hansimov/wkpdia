@@ -1,0 +1,19 @@
+[project]
+name = "wkpdia"
+version = "0.1"
+authors = [
+    { name="Hansimov" },
+]
+description = "Wikipedia downloader and parser in Python"
+readme = "README.md"
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [ "purehtml" ]
+
+[project.urls]
+Homepage = "https://github.com/Hansimov/wkpdia"
+Issues = "https://github.com/Hansimov/wkpdia/issues"
