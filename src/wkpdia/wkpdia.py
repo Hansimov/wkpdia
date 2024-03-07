@@ -23,12 +23,18 @@ class WikipediaFetcher:
         return requests_params
 
     def fetch(
-        self, title, overwrite=False, output_format="markdown", lang="en", proxy=None
+        self,
+        title,
+        overwrite=False,
+        output_format="markdown",
+        lang="en",
+        proxy=None,
+        verbose=False,
     ):
+        logger.enter_quiet(not verbose)
         logger.note(f"> Fetching from Wikipedia: [{title}]")
         self.output_folder = self.output_root / f"{lang}-wikipedia"
         self.html_path = self.output_folder / f"{title}.html"
-
         if not overwrite and self.html_path.exists():
             logger.mesg(f"  > HTML exists: {self.html_path}")
             with open(self.html_path, "r", encoding="utf-8") as rf:
@@ -41,11 +47,11 @@ class WikipediaFetcher:
 
             status_code = req.status_code
             if status_code == 200:
+                logger.file(f"  - [{status_code}] {self.url}")
                 self.html_str = req.text
                 self.output_folder.mkdir(parents=True, exist_ok=True)
                 with open(self.html_path, "w", encoding="utf-8") as wf:
                     wf.write(self.html_str)
-                logger.file(f"  - [{status_code}] {self.url}")
                 logger.success(f"  > HTML Saved at: {self.html_path}")
             else:
                 if status_code == 404:
@@ -56,9 +62,12 @@ class WikipediaFetcher:
                 raise ConnectionError(err_msg)
 
         if output_format == "markdown":
-            return self.to_markdown(overwrite=overwrite)
+            res = self.to_markdown(overwrite=overwrite)
         else:
-            return {"path": self.html_path, "str": self.html_str, "format": "html"}
+            res = {"path": self.html_path, "str": self.html_str, "format": "html"}
+
+        logger.exit_quiet(not verbose)
+        return res
 
     def to_markdown(self, overwrite=False):
         self.markdown_path = self.html_path.with_suffix(".md")
@@ -71,7 +80,7 @@ class WikipediaFetcher:
             self.markdown_str = purify_html_file(self.html_path)
             with open(self.markdown_path, "w", encoding="utf-8") as wf:
                 wf.write(self.markdown_str)
-            logger.success(f"  > Mardown saved at: {self.markdown_path}")
+            logger.success(f"  > Markdown saved at: {self.markdown_path}")
 
         return {
             "path": self.markdown_path,
@@ -80,10 +89,22 @@ class WikipediaFetcher:
         }
 
 
-def wkpdia_get(title, overwrite=False, output_format="markdown", lang="en", proxy=None):
+def wkpdia_get(
+    title,
+    overwrite=False,
+    output_format="markdown",
+    lang="en",
+    proxy=None,
+    verbose=False,
+):
     fetcher = WikipediaFetcher()
     return fetcher.fetch(
-        title, overwrite=overwrite, output_format=output_format, lang=lang, proxy=proxy
+        title,
+        overwrite=overwrite,
+        output_format=output_format,
+        lang=lang,
+        proxy=proxy,
+        verbose=verbose,
     )
 
 
@@ -95,8 +116,9 @@ if __name__ == "__main__":
         output_format="markdown",
         lang="en",
         proxy="http://127.0.0.1:11111",
+        verbose=False,
     )
     path, content, output_format = res["path"], res["str"], res["format"]
 
     logger.file(f"> [{output_format}] [{path}]:")
-    logger.line(content)
+    # logger.line(content)
