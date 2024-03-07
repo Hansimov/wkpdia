@@ -14,6 +14,17 @@ class WikipediaFetcher:
 
         self.headers = {"User-Agent": USER_AGENT}
 
+    def construct_request_params(self, title, proxy=None):
+        self.url = WIKIPEDIA_URL_ROOT + title
+        requests_params = {
+            "url": self.url,
+            "headers": self.headers,
+            "timeout": 15,
+        }
+        if proxy:
+            requests_params["proxies"] = {"http": proxy, "https": proxy}
+        return requests_params
+
     def fetch(self, title, overwrite=False, output_format="markdown", proxy=None):
         logger.note(f"> Fetching from Wikipedia: [{title}]")
         self.html_path = self.output_folder / f"{title}.html"
@@ -23,13 +34,7 @@ class WikipediaFetcher:
             with open(self.html_path, "r", encoding="utf-8") as rf:
                 self.html_str = rf.read()
         else:
-            self.url = WIKIPEDIA_URL_ROOT + title
-            requests_params = {
-                "url": self.url,
-                "headers": self.headers,
-            }
-            if proxy:
-                requests_params["proxies"] = {"http": proxy, "https": proxy}
+            requests_params = self.construct_request_params(title=title, proxy=proxy)
             req = requests.get(**requests_params)
 
             status_code = req.status_code
@@ -42,10 +47,11 @@ class WikipediaFetcher:
                 logger.success(f"  > HTML Saved at: {self.html_path}")
             else:
                 if status_code == 404:
-                    logger.err(f"{status_code} - Page not found : [{title}]")
+                    err_msg = f"{status_code} - Page not found : [{title}]"
                 else:
-                    logger.err(f"{status_code} Error")
-                return (None, None)
+                    err_msg = f"{status_code} - Error"
+                logger.err(err_msg)
+                raise Exception(err_msg)
 
         if output_format == "markdown":
             return self.to_markdown(overwrite=overwrite)
