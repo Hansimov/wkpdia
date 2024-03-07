@@ -14,7 +14,7 @@ class WikipediaFetcher:
 
         self.headers = {"User-Agent": USER_AGENT}
 
-    def fetch(self, title, overwrite=False, output_format="markdown"):
+    def fetch(self, title, overwrite=False, output_format="markdown", proxy=None):
         logger.note(f"> Fetching from Wikipedia: [{title}]")
         self.html_path = self.output_folder / f"{title}.html"
 
@@ -24,7 +24,14 @@ class WikipediaFetcher:
                 self.html_str = rf.read()
         else:
             self.url = WIKIPEDIA_URL_ROOT + title
-            req = requests.get(self.url, headers=self.headers)
+            requests_params = {
+                "url": self.url,
+                "headers": self.headers,
+            }
+            if proxy:
+                requests_params["proxies"] = {"http": proxy, "https": proxy}
+            req = requests.get(**requests_params)
+
             status_code = req.status_code
             if status_code == 200:
                 logger.file(f"  - [{status_code}] {self.url}")
@@ -61,14 +68,18 @@ class WikipediaFetcher:
         return {"path": self.markdown_path, "str": self.markdown_str}
 
 
-def wkpdia_get(title, overwrite=False, output_format="markdown"):
+def wkpdia_get(title, overwrite=False, output_format="markdown", proxy=None):
     fetcher = WikipediaFetcher()
-    return fetcher.fetch(title, overwrite=overwrite, output_format=output_format)
+    return fetcher.fetch(
+        title, overwrite=overwrite, output_format=output_format, proxy=proxy
+    )
 
 
 if __name__ == "__main__":
     title = "R._Daneel_Olivaw"
-    res = wkpdia_get(title, overwrite=True, output_format="markdown")
+    res = wkpdia_get(
+        title, overwrite=True, output_format="markdown", proxy="http://127.0.0.1:11111"
+    )
     path = res["path"]
     content = res["str"]
 
